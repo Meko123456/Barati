@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.android.ui.theme.BaratiTheme
-import io.github.meko123456.barati.shared.Greeting
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +40,7 @@ private fun Placeholder(modifier: Modifier = Modifier) {
     ) {
         Text("Barati 🗂️", style = MaterialTheme.typography.headlineLarge)
         Text(
-            Greeting.message(),
+            "Flashcards — coming to life",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 8.dp),
         )
