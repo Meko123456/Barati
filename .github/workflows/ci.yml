@@ -24,5 +24,5 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build shared + Android
-        run: ./gradlew :androidApp:assembleDebug --stacktrace
+      - name: Build + test shared and Android
+        run: ./gradlew :shared:testAndroidHostTest :androidApp:assembleDebug --stacktrace
