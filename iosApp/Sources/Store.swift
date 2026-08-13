@@ -8,7 +8,10 @@ import Shared
 /// native SwiftUI views refresh after a card is graded.
 @MainActor
 final class Store: ObservableObject {
-    private let repo = DeckRepository(initial: SampleDecks.shared.all)
+    private let repo = DeckRepository(
+        initial: SampleDecks.shared.all,
+        store: ReviewStore(kv: UserDefaultsKeyValueStore(defaults: .standard))
+    )
 
     /// Bumped on every grade so observing views recompute their queues/counts.
     @Published private(set) var version = 0

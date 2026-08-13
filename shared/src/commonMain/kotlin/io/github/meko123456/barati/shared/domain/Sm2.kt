@@ -1,5 +1,6 @@
 package io.github.meko123456.barati.shared.domain
 
+import kotlinx.serialization.Serializable
 import kotlin.math.roundToLong
 
 /** How well a card was recalled. Quality maps to the SM-2 0–5 scale. */
@@ -11,6 +12,7 @@ enum class Grade(val quality: Int) {
 }
 
 /** Per-card scheduling state. */
+@Serializable
 data class ReviewState(
     val repetitions: Int = 0,
     val intervalDays: Long = 0,

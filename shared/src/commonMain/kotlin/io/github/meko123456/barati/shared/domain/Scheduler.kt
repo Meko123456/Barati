@@ -1,6 +1,9 @@
 package io.github.meko123456.barati.shared.domain
 
+import kotlinx.serialization.Serializable
+
 /** Persisted review state for a card (defaults = a brand-new, never-seen card). */
+@Serializable
 data class ReviewInfo(
     val state: ReviewState = ReviewState(),
     val lastReviewedEpochDay: Long = 0,

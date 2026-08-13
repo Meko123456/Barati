@@ -9,13 +9,17 @@ import io.github.meko123456.barati.shared.domain.Sm2
 
 /**
  * The single source of truth both apps talk to: decks plus per-card SM-2 state.
- * In-memory for now (persistence is a later issue). Pure Kotlin in commonMain,
- * so the Android (Compose) and iOS (SwiftUI) UIs drive identical behaviour.
+ * Pure Kotlin in commonMain, so the Android (Compose) and iOS (SwiftUI) UIs
+ * drive identical behaviour. Review progress is persisted through the injected
+ * [ReviewStore]; the default keeps everything in memory (used by tests).
  */
-class DeckRepository(initial: List<Deck> = SampleDecks.all) {
+class DeckRepository(
+    initial: List<Deck> = SampleDecks.all,
+    private val store: ReviewStore = ReviewStore(InMemoryKeyValueStore()),
+) {
 
     private val decks: MutableList<Deck> = initial.toMutableList()
-    private val reviews: MutableMap<String, ReviewInfo> = mutableMapOf()
+    private val reviews: MutableMap<String, ReviewInfo> = store.load().toMutableMap()
 
     fun decks(): List<Deck> = decks.toList()
 
@@ -33,6 +37,7 @@ class DeckRepository(initial: List<Deck> = SampleDecks.all) {
     fun grade(cardId: String, grade: Grade, today: Long) {
         val current = reviewInfo(cardId)
         reviews[cardId] = ReviewInfo(Sm2.schedule(current.state, grade), today)
+        store.save(reviews)
     }
 
     fun addDeck(deck: Deck) {

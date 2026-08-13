@@ -1,19 +1,22 @@
 package io.github.meko123456.barati.android
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import io.github.meko123456.barati.shared.data.DeckRepository
+import io.github.meko123456.barati.shared.data.PrefsKeyValueStore
+import io.github.meko123456.barati.shared.data.ReviewStore
 import io.github.meko123456.barati.shared.domain.Deck
 import io.github.meko123456.barati.shared.domain.FlashCard
 import io.github.meko123456.barati.shared.domain.Grade
 import java.time.LocalDate
 
 /** Thin Android wrapper over the shared [DeckRepository]. */
-class BaratiViewModel : ViewModel() {
+class BaratiViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val repo = DeckRepository()
+    private val repo = DeckRepository(store = ReviewStore(PrefsKeyValueStore(app)))
 
     /** Bumped after mutations so Compose recomputes derived values. */
     var version by mutableIntStateOf(0)
