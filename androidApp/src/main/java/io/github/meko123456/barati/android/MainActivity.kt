@@ -2,19 +2,14 @@ package io.github.meko123456.barati.android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.meko123456.barati.android.ui.theme.BaratiTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,26 +18,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BaratiTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-                    Placeholder(Modifier.padding(padding))
+                val vm: BaratiViewModel = viewModel()
+                var studyDeck by remember { mutableStateOf<String?>(null) }
+
+                BackHandler(enabled = studyDeck != null) { studyDeck = null }
+
+                val deck = studyDeck
+                if (deck == null) {
+                    DeckListScreen(viewModel = vm, onOpenDeck = { studyDeck = it })
+                } else {
+                    StudyScreen(viewModel = vm, deckId = deck, onBack = { studyDeck = null })
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Placeholder(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("Barati 🗂️", style = MaterialTheme.typography.headlineLarge)
-        Text(
-            "Flashcards — coming to life",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 8.dp),
-        )
     }
 }
