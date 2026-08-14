@@ -20,14 +20,24 @@ class MainActivity : ComponentActivity() {
             BaratiTheme {
                 val vm: BaratiViewModel = viewModel()
                 var studyDeck by remember { mutableStateOf<String?>(null) }
+                var editDeck by remember { mutableStateOf<String?>(null) }
 
-                BackHandler(enabled = studyDeck != null) { studyDeck = null }
+                BackHandler(enabled = studyDeck != null || editDeck != null) {
+                    studyDeck = null
+                    editDeck = null
+                }
 
-                val deck = studyDeck
-                if (deck == null) {
-                    DeckListScreen(viewModel = vm, onOpenDeck = { studyDeck = it })
-                } else {
-                    StudyScreen(viewModel = vm, deckId = deck, onBack = { studyDeck = null })
+                when {
+                    studyDeck != null ->
+                        StudyScreen(viewModel = vm, deckId = studyDeck!!, onBack = { studyDeck = null })
+                    editDeck != null ->
+                        DeckEditScreen(viewModel = vm, deckId = editDeck!!, onBack = { editDeck = null })
+                    else ->
+                        DeckListScreen(
+                            viewModel = vm,
+                            onOpenDeck = { studyDeck = it },
+                            onEditDeck = { editDeck = it },
+                        )
                 }
             }
         }
