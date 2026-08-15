@@ -66,7 +66,7 @@ fun DeckListScreen(
                         Column(Modifier.weight(1f)) {
                             Text(deck.name, style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "${deck.cards.size} cards",
+                                "${deck.cards.size} ${if (deck.cards.size == 1) "card" else "cards"}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
