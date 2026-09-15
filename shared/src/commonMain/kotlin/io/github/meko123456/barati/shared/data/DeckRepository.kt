@@ -23,8 +23,15 @@ class DeckRepository(
     private val deckStore: DeckStore = DeckStore(InMemoryKeyValueStore()),
 ) {
 
-    private val decks: MutableList<Deck> = deckStore.load()?.toMutableList()
-        ?: initial.toMutableList().also { deckStore.save(it) }
+    private val decks: MutableList<Deck> = when (val stored = deckStore.read()) {
+        is DeckStore.Stored.Decks -> stored.decks.toMutableList()
+        // Genuinely first launch: seed the samples and record that we did.
+        DeckStore.Stored.Missing -> initial.toMutableList().also { deckStore.save(it) }
+        // Something is saved and this version cannot read it. read() has put a copy aside; seeding
+        // the samples here would save them over the original and make the loss permanent, so start
+        // empty and write nothing until the user does something that deserves saving.
+        DeckStore.Stored.Unreadable -> mutableListOf()
+    }
     private val reviews: MutableMap<String, ReviewInfo> = store.load().toMutableMap()
 
     fun decks(): List<Deck> = decks.toList()
