@@ -7,7 +7,7 @@ plugins {
 kotlin {
     androidLibrary {
         namespace = "io.github.meko123456.barati.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 26
         withHostTestBuilder {}
     }
