@@ -33,3 +33,30 @@ targets:
           cd "$SRCROOT/.."
           export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}"
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+
+  BaratiUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: Barati
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.meko123456.barati.uitests
+        # Without this the bundle has no Info.plist and signing fails with a message that
+        # blames the signature rather than the missing plist.
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+schemes:
+  Barati:
+    build:
+      targets:
+        Barati: all
+        BaratiUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - BaratiUITests

@@ -23,30 +23,45 @@ struct DeckListView: View {
                             Text("\(item.deck.cards.count) \(item.deck.cards.count == 1 ? "card" : "cards")")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("cards-\(item.deck.name)")
                         }
                         Spacer()
                         if item.due > 0 {
-                            Text("\(item.due) due").font(.headline).foregroundStyle(.tint)
+                            Text("\(item.due) due")
+                                .font(.headline)
+                                .foregroundStyle(.tint)
+                                .accessibilityIdentifier("due-\(item.deck.name)")
                         } else {
-                            Image(systemName: "checkmark").foregroundStyle(.secondary)
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("nothingDue-\(item.deck.name)")
                         }
                     }
                     .padding(.vertical, 4)
+                    // Keeps the counts addressable one by one. A NavigationLink is a button, and a
+                    // button merges its children into a single element whose label is everything
+                    // inside it concatenated — so without this the due count can only be asserted
+                    // as a substring of the whole row.
+                    .accessibilityElement(children: .contain)
                 }
+                .accessibilityIdentifier("deck-\(item.deck.name)")
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) { store.deleteDeck(item.deck.id) } label: {
                         Label("Delete", systemImage: "trash")
                     }
+                    .accessibilityIdentifier("deleteDeck-\(item.deck.name)")
                     Button { path.append(DeckRoute.edit(item.deck.id)) } label: {
                         Label("Edit", systemImage: "pencil")
                     }
                     .tint(.blue)
+                    .accessibilityIdentifier("editDeck-\(item.deck.name)")
                 }
             }
             .navigationTitle("Barati")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { newDeckName = ""; addingDeck = true } label: { Image(systemName: "plus") }
+                        .accessibilityIdentifier("newDeck")
                 }
             }
             .navigationDestination(for: DeckRoute.self) { route in

@@ -9,7 +9,7 @@ import Shared
 /// mutation. Decks and reviews persist through the same native `UserDefaults`.
 @MainActor
 final class Store: ObservableObject {
-    private let defaults = UserDefaultsKeyValueStore(defaults: .standard)
+    private let defaults = UserDefaultsKeyValueStore(defaults: Store.backingDefaults())
     private lazy var repo = DeckRepository(
         initial: SampleDecks.shared.all,
         store: ReviewStore(kv: defaults),
@@ -20,6 +20,24 @@ final class Store: ObservableObject {
     @Published private(set) var version = 0
 
     private var today: Int64 { Int64(Date().timeIntervalSince1970 / 86_400) }
+
+    /// Where decks and review progress are written: the real defaults for the app, a throwaway
+    /// suite for a UI test.
+    ///
+    /// This app remembers everything, which is exactly what makes it untestable against the
+    /// standard suite: the samples seed on first launch only, and a graded card stays graded for a
+    /// day. A UI test run against `.standard` therefore passes once and then fails until tomorrow.
+    ///
+    /// `UITEST_DEFAULTS_RESET` is separate from the suite name on purpose — a test that relaunches
+    /// to check what survived needs the second launch to find the first one's writes still there.
+    private static func backingDefaults() -> UserDefaults {
+        let env = ProcessInfo.processInfo.environment
+        guard let suite = env["UITEST_DEFAULTS_SUITE"], let defaults = UserDefaults(suiteName: suite) else {
+            return .standard
+        }
+        if env["UITEST_DEFAULTS_RESET"] == "1" { defaults.removePersistentDomain(forName: suite) }
+        return defaults
+    }
 
     func deckSummaries() -> [(deck: Deck, due: Int)] {
         repo.decks().map { deck in

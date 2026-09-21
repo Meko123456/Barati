@@ -45,9 +45,14 @@ struct DeckEditView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // Three unlabelled glyphs in a row: without identifiers a query has to pick one of
+                // three ambiguous buttons, and picking wrong here deletes the deck.
                 Button { deckName = deck?.name ?? ""; showingRename = true } label: { Image(systemName: "pencil") }
+                    .accessibilityIdentifier("renameDeck")
                 Button(role: .destructive) { store.deleteDeck(deckId); dismiss() } label: { Image(systemName: "trash") }
+                    .accessibilityIdentifier("deleteDeck")
                 Button { front = ""; back = ""; showingAddCard = true } label: { Image(systemName: "plus") }
+                    .accessibilityIdentifier("addCard")
             }
         }
         .alert("Add card", isPresented: $showingAddCard) {

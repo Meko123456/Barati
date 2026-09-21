@@ -86,15 +86,29 @@ jobs:
         working-directory: iosApp
         run: xcodegen generate
 
-      # The destination names no device. Runner images change which simulators they carry, and a
-      # hardcoded "iPhone 16" turns an image update into a red build for no reason - a generic
-      # simulator destination is all a build needs, because nothing here has to boot.
+      # A simulator now has to boot, because the tests run on one - but it is chosen rather than
+      # named. Runner images change which devices they carry, and a hardcoded "iPhone 16" turns an
+      # image update into a red build for no reason.
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in d for x in d[k] if 'iPhone' in x['name']))")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "using $UDID"
+
+      # `test`, not `build`. Building proved the Swift compiles and that the Kotlin framework is
+      # where the Xcode target expects it - which is real, but it is the whole of what it proved.
+      # Every decision this app makes is made in Kotlin: which cards are due, what a grade does to
+      # a schedule, what a deck looks like after an edit. A green build says the two languages
+      # agree about types and says nothing about whether a tap reaches DeckRepository and the
+      # answer comes back.
       #
-      # Building is the whole scope on purpose. It proves the Swift compiles and that the Kotlin
-      # framework is where the Xcode target expects it, which is exactly the seam that was unchecked.
-      - name: Build the iOS app
+      # The UI tests drive that chain, including the round trip through UserDefaults across an
+      # app restart, which is why they take a couple of minutes rather than seconds.
+      - name: Build and test the iOS app
         working-directory: iosApp
         run: |
-          xcodebuild -project Barati.xcodeproj -scheme Barati \
-                     -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-                     -configuration Debug build
+          xcodebuild test -project Barati.xcodeproj -scheme Barati \
+                     -sdk iphonesimulator -destination "id=${{ steps.sim.outputs.udid }}" \
+                     -configuration Debug

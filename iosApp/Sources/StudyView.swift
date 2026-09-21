@@ -45,6 +45,7 @@ struct StudyView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("studyProgress")
 
             VStack(alignment: .leading, spacing: 16) {
                 Text(card.front).font(.title2)
@@ -66,12 +67,14 @@ struct StudyView: View {
                             .buttonStyle(.borderedProminent)
                             .tint(g.tint)
                             .frame(maxWidth: .infinity)
+                            .accessibilityIdentifier("grade-\(g.label)")
                     }
                 }
             } else {
                 Button("Show answer") { revealed = true }
                     .buttonStyle(.borderedProminent)
                     .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("showAnswer")
             }
         }
         .padding()
