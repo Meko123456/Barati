@@ -58,6 +58,35 @@ final class StudyFlowTests: XCTestCase {
         expect(due, toHaveLabel: "4 due")
     }
 
+    func testACardGradedAgainComesBackBeforeTheSittingEnds() {
+        launchFresh()
+        tap(app.buttons["deck-Kotlin basics"], "the Kotlin basics row")
+        let progress = app.staticTexts["studyProgress"]
+        XCTAssertTrue(progress.waitForExistence(timeout: 30), "the study queue never appeared")
+
+        tap(app.buttons["showAnswer"], "Show answer")
+        tap(app.buttons["grade-Again"], "the Again button")
+        for position in 2...5 {
+            expect(progress, toHaveLabel: "Card \(position) of 5")
+            tap(app.buttons["showAnswer"], "Show answer")
+            tap(app.buttons["grade-Good"], "the Good button")
+        }
+
+        // The forgotten card comes round again before the sitting ends. `StudySession`, in Kotlin,
+        // put it at the back of the line; Swift only shows what it says is next.
+        expect(progress, toHaveLabel: "Once more · 1 left")
+        tap(app.buttons["showAnswer"], "Show answer")
+        tap(app.buttons["grade-Good"], "the Good button")
+        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: 15), "the sitting did not end")
+
+        back()
+        // Every card was graded across the bridge, the forgotten one for tomorrow.
+        XCTAssertTrue(
+            app.descendants(matching: .any)["nothingDue-Kotlin basics"].waitForExistence(timeout: 15),
+            "cards are still due after the sitting"
+        )
+    }
+
     func testACardAddedToADeckIsDueTheSameDay() {
         launchFresh()
 

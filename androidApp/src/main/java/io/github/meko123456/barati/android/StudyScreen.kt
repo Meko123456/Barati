@@ -21,8 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,12 +30,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.shared.domain.Grade
+import io.github.meko123456.barati.shared.domain.StudySession
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) {
-    val queue = remember { viewModel.dueQueue(deckId) }
-    var index by remember { mutableIntStateOf(0) }
+    val session = remember { StudySession(viewModel.dueQueue(deckId)) }
+    // The session is shared Kotlin, not Compose state. The card on show is, and every grade sets
+    // it, even to the same card: a lone card graded Again comes straight back as a repeat.
+    var card by remember { mutableStateOf(session.current, neverEqualPolicy()) }
     var revealed by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -51,30 +54,34 @@ fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) 
         },
     ) { padding ->
         val content = Modifier.fillMaxSize().padding(padding).padding(20.dp)
+        val shown = card
         when {
-            queue.isEmpty() -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
+            session.total == 0 -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
                 Text("Nothing due — come back later 🎉", textAlign = TextAlign.Center)
             }
-            index >= queue.size -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
+            shown == null -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
                 Text("Session complete", style = MaterialTheme.typography.titleMedium)
-                Text("${queue.size} cards reviewed", style = MaterialTheme.typography.bodyLarge)
+                Text("${session.total} cards reviewed", style = MaterialTheme.typography.bodyLarge)
                 Button(onClick = onBack, modifier = Modifier.padding(top = 16.dp)) { Text("Done") }
             }
             else -> {
-                val card = queue[index]
+                val position = minOf(session.reviewed + 1, session.total)
                 Column(content, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     LinearProgressIndicator(
-                        progress = { (index + 1f) / queue.size },
+                        progress = { position.toFloat() / session.total },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Text("Card ${index + 1} of ${queue.size}", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        if (session.isRepeat) "Once more · ${session.remaining} left" else "Card $position of ${session.total}",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
 
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth().padding(24.dp)) {
-                            Text(card.front, style = MaterialTheme.typography.titleLarge)
+                            Text(shown.front, style = MaterialTheme.typography.titleLarge)
                             if (revealed) {
                                 Text(
-                                    card.back,
+                                    shown.back,
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.padding(top = 16.dp),
                                 )
@@ -91,8 +98,9 @@ fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) 
                             Grade.entries.forEach { grade ->
                                 FilledTonalButton(
                                     onClick = {
-                                        viewModel.grade(card.id, grade)
-                                        index++
+                                        // Only a card's first grade in the sitting is scheduled.
+                                        if (session.grade(grade)) viewModel.grade(shown.id, grade)
+                                        card = session.current
                                         revealed = false
                                     },
                                     modifier = Modifier.weight(1f),

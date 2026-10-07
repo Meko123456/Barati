@@ -5,8 +5,11 @@ struct StudyView: View {
     @EnvironmentObject var store: Store
     let deckId: String
 
-    @State private var queue: [FlashCard] = []
-    @State private var index = 0
+    /// The shared sitting: a card graded Again comes round again before it ends.
+    @State private var session: StudySession?
+    /// Bumped after every grade. The session is a Kotlin object SwiftUI cannot watch, so the
+    /// body reads this to know it has changed.
+    @State private var step = 0
     @State private var revealed = false
 
     var body: some View {
@@ -14,34 +17,42 @@ struct StudyView: View {
             .navigationTitle("Study")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                if queue.isEmpty {
-                    queue = store.dueQueue(deckId: deckId)
+                if session == nil {
+                    session = StudySession(cards: store.dueQueue(deckId: deckId))
                 }
             }
     }
 
     @ViewBuilder
     private var content: some View {
-        if queue.isEmpty {
-            ContentUnavailableCompat(
-                title: "Nothing due",
-                systemImage: "checkmark.circle",
-                message: "Come back later 🎉"
-            )
-        } else if index >= queue.count {
-            VStack(spacing: 12) {
-                Text("Session complete").font(.title2.bold())
-                Text("\(queue.count) cards reviewed").foregroundStyle(.secondary)
+        let _ = step
+        if let session {
+            if session.total == 0 {
+                ContentUnavailableCompat(
+                    title: "Nothing due",
+                    systemImage: "checkmark.circle",
+                    message: "Come back later 🎉"
+                )
+            } else if let current = session.current {
+                card(current, in: session)
+            } else {
+                VStack(spacing: 12) {
+                    Text("Session complete").font(.title2.bold())
+                    Text("\(session.total) cards reviewed").foregroundStyle(.secondary)
+                }
             }
         } else {
-            card(queue[index])
+            // Until onAppear builds the sitting, which needs the store from the environment. Not
+            // an empty view: an empty view never appears, so onAppear would never run.
+            Color.clear
         }
     }
 
-    private func card(_ card: FlashCard) -> some View {
-        VStack(spacing: 20) {
-            ProgressView(value: Double(index + 1), total: Double(queue.count))
-            Text("Card \(index + 1) of \(queue.count)")
+    private func card(_ card: FlashCard, in session: StudySession) -> some View {
+        let position = min(Int(session.reviewed) + 1, Int(session.total))
+        return VStack(spacing: 20) {
+            ProgressView(value: Double(position), total: Double(session.total))
+            Text(session.isRepeat ? "Once more · \(session.remaining) left" : "Card \(position) of \(session.total)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -63,7 +74,7 @@ struct StudyView: View {
             if revealed {
                 HStack(spacing: 8) {
                     ForEach(Self.grades, id: \.label) { g in
-                        Button(g.label) { answer(card: card, grade: g.grade) }
+                        Button(g.label) { answer(card: card, grade: g.grade, in: session) }
                             .buttonStyle(.borderedProminent)
                             .tint(g.tint)
                             .frame(maxWidth: .infinity)
@@ -87,9 +98,12 @@ struct StudyView: View {
         ("Easy", .easy, .green),
     ]
 
-    private func answer(card: FlashCard, grade: Grade) {
-        store.grade(cardId: card.id, grade: grade)
-        index += 1
+    private func answer(card: FlashCard, grade: Grade, in session: StudySession) {
+        // Only a card's first grade in the sitting is scheduled; a repeat is practice.
+        if session.grade(grade: grade) {
+            store.grade(cardId: card.id, grade: grade)
+        }
+        step += 1
         revealed = false
     }
 }
