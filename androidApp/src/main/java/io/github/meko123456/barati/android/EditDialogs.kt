@@ -10,7 +10,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,7 +25,7 @@ fun TextFieldDialog(
     onDismiss: () -> Unit,
     initial: String = "",
 ) {
-    var text by remember { mutableStateOf(initial) }
+    var text by rememberSaveable { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -55,8 +55,8 @@ fun CardDialog(
     initialFront: String = "",
     initialBack: String = "",
 ) {
-    var front by remember { mutableStateOf(initialFront) }
-    var back by remember { mutableStateOf(initialBack) }
+    var front by rememberSaveable { mutableStateOf(initialFront) }
+    var back by rememberSaveable { mutableStateOf(initialBack) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },

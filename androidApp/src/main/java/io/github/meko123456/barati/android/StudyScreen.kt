@@ -24,22 +24,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.shared.domain.Grade
-import io.github.meko123456.barati.shared.domain.StudySession
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) {
-    val session = remember { StudySession(viewModel.dueQueue(deckId)) }
+    // From the ViewModel, which outlives the Activity: a sitting rebuilt here after a rotation
+    // lost its repeats, because a card graded Again is no longer due.
+    val session = remember(deckId) { viewModel.studySession(deckId) }
     // The session is shared Kotlin, not Compose state. The card on show is, and every grade sets
     // it, even to the same card: a lone card graded Again comes straight back as a repeat.
     var card by remember { mutableStateOf(session.current, neverEqualPolicy()) }
-    var revealed by remember { mutableStateOf(false) }
+    var revealed by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {

@@ -12,6 +12,7 @@ import io.github.meko123456.barati.shared.data.ReviewStore
 import io.github.meko123456.barati.shared.domain.Deck
 import io.github.meko123456.barati.shared.domain.FlashCard
 import io.github.meko123456.barati.shared.domain.Grade
+import io.github.meko123456.barati.shared.domain.StudySession
 import java.time.LocalDate
 
 /** Thin Android wrapper over the shared [DeckRepository]. */
@@ -32,6 +33,20 @@ class BaratiViewModel(app: Application) : AndroidViewModel(app) {
     fun deck(deckId: String): Deck? = repo.deck(deckId)
 
     fun dueQueue(deckId: String): List<FlashCard> = repo.dueCards(deckId, today)
+
+    // The sitting in progress. Kept here so it outlives the Activity: rebuilt after a rotation, a
+    // sitting lost the cards graded Again, which are no longer due, and started its count over.
+    private var sitting: Pair<String, StudySession>? = null
+
+    /** The sitting for [deckId]: the one in progress, or a new one over the cards due now. */
+    fun studySession(deckId: String): StudySession =
+        sitting?.takeIf { it.first == deckId }?.second
+            ?: StudySession(dueQueue(deckId)).also { sitting = deckId to it }
+
+    /** Called when the study screen closes, so the next visit starts a new sitting. */
+    fun endStudy() {
+        sitting = null
+    }
 
     fun grade(cardId: String, grade: Grade) {
         repo.grade(cardId, grade, today)

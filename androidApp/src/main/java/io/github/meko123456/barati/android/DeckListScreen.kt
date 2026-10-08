@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +40,7 @@ fun DeckListScreen(
 ) {
     val version = viewModel.version // snapshot read → recompose after edits/grading
     val summaries = remember(version) { viewModel.deckSummaries() }
-    var addingDeck by remember { mutableStateOf(false) }
+    var addingDeck by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Barati 🗂️") }) },

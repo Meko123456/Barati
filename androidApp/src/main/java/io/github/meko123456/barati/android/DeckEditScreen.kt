@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,9 +46,12 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
         return
     }
 
-    var addingCard by remember { mutableStateOf(false) }
-    var editingCard by remember { mutableStateOf<FlashCard?>(null) }
-    var renamingDeck by remember { mutableStateOf(false) }
+    // Saveable, so a dialog stays open through a rotation. The card being edited is kept by id
+    // and looked up again, since a FlashCard can't go into saved state.
+    var addingCard by rememberSaveable { mutableStateOf(false) }
+    var editingCardId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editingCard = deck.cards.firstOrNull { it.id == editingCardId }
+    var renamingDeck by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -108,7 +112,7 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            IconButton(onClick = { editingCard = card }) {
+                            IconButton(onClick = { editingCardId = card.id }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Edit card")
                             }
                             IconButton(onClick = { viewModel.deleteCard(deckId, card.id) }) {
@@ -136,8 +140,8 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
             confirmLabel = "Save",
             initialFront = card.front,
             initialBack = card.back,
-            onConfirm = { front, back -> viewModel.updateCard(deckId, card.id, front, back); editingCard = null },
-            onDismiss = { editingCard = null },
+            onConfirm = { front, back -> viewModel.updateCard(deckId, card.id, front, back); editingCardId = null },
+            onDismiss = { editingCardId = null },
         )
     }
 
