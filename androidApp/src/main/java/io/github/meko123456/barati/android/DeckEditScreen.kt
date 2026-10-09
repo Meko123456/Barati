@@ -95,7 +95,9 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                // 88dp at the bottom: the add button's 56 plus its margins. With 16, the button sat on the
+                // last card's delete button, so it could not be reached.
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(deck.cards, key = { it.id }) { card ->
