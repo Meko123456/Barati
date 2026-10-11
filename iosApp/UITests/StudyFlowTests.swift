@@ -141,6 +141,28 @@ final class StudyFlowTests: XCTestCase {
         expect(app.staticTexts["due-Kotlin basics"], toHaveLabel: "4 due")
     }
 
+    func testDeletingADeckAsksFirst() {
+        launchFresh()
+
+        // The trash glyph deleted the whole deck at one tap. Now it asks, and Cancel keeps the deck.
+        openEditor(forDeck: "Kotlin basics")
+        tap(app.buttons["deleteDeck"], "the delete-deck button")
+        let alert = app.alerts["Delete “Kotlin basics”?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 15), "deleting a deck did not ask first")
+        XCTAssertTrue(alert.staticTexts["Its 5 cards go with it."].exists, "the question did not say what goes")
+        tap(alert.buttons["Cancel"], "Cancel")
+        back()
+        let cards = app.staticTexts["cards-Kotlin basics"]
+        XCTAssertTrue(cards.waitForExistence(timeout: 15), "Cancel deleted the deck anyway")
+
+        // And confirming does delete it.
+        openEditor(forDeck: "Kotlin basics")
+        tap(app.buttons["deleteDeck"], "the delete-deck button")
+        XCTAssertTrue(alert.waitForExistence(timeout: 15), "the second delete did not ask either")
+        tap(alert.buttons["Delete"], "Delete")
+        XCTAssertTrue(cards.waitForNonExistence(timeout: 15), "the confirmed delete left the deck in the list")
+    }
+
     // MARK: - Driving the app
 
     /// Launches against an empty store, so the repository seeds the samples and no earlier test's

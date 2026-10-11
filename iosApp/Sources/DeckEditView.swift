@@ -15,6 +15,7 @@ struct DeckEditView: View {
     @State private var front = ""
     @State private var back = ""
     @State private var deckName = ""
+    @State private var confirmingDelete = false
 
     var body: some View {
         let deck = store.deck(deckId)
@@ -49,11 +50,21 @@ struct DeckEditView: View {
                 // three ambiguous buttons, and picking wrong here deletes the deck.
                 Button { deckName = deck?.name ?? ""; showingRename = true } label: { Image(systemName: "pencil") }
                     .accessibilityIdentifier("renameDeck")
-                Button(role: .destructive) { store.deleteDeck(deckId); dismiss() } label: { Image(systemName: "trash") }
+                Button(role: .destructive) { confirmingDelete = true } label: { Image(systemName: "trash") }
                     .accessibilityIdentifier("deleteDeck")
                 Button { front = ""; back = ""; showingAddCard = true } label: { Image(systemName: "plus") }
                     .accessibilityIdentifier("addCard")
             }
+        }
+        // Asks first. The whole deck, every card in it, went at one tap of a glyph next to Rename. An
+        // alert, like this view's other prompts: as a confirmationDialog off the toolbar button, its
+        // Cancel never became tappable in the UI test on iOS 26.
+        .alert("Delete “\(deck?.name ?? "this deck")”?", isPresented: $confirmingDelete) {
+            Button("Delete", role: .destructive) { store.deleteDeck(deckId); dismiss() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            let cards = deck?.cards.count ?? 0
+            Text(cards == 0 ? "It has no cards yet." : cards == 1 ? "Its 1 card goes with it." : "Its \(cards) cards go with it.")
         }
         .alert("Add card", isPresented: $showingAddCard) {
             TextField("Front (prompt)", text: $front)
