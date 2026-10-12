@@ -3,6 +3,7 @@ import Shared
 
 struct StudyView: View {
     @EnvironmentObject var store: Store
+    @Environment(\.dynamicTypeSize) private var typeSize
     let deckId: String
 
     /// The shared sitting: a card graded Again comes round again before it ends.
@@ -58,21 +59,28 @@ struct StudyView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier("studyProgress")
 
-            VStack(alignment: .leading, spacing: 16) {
-                Text(card.front).font(.title2)
-                if revealed {
-                    Divider()
-                    Text(card.back).font(.body)
+            // Scrolls, and takes the room the spacer used to: at the largest text sizes a long
+            // answer ran off the bottom and ended in an ellipsis, with no way to read the rest.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(card.front).font(.title2)
+                    if revealed {
+                        Divider()
+                        Text(card.back).font(.body)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
-
-            Spacer()
 
             if revealed {
-                HStack(spacing: 8) {
+                // One above another at the accessibility text sizes. Four abreast, each word broke
+                // into a letter or two per line: "A g ai n".
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: 8))
+                    : AnyLayout(HStackLayout(spacing: 8))
+                layout {
                     ForEach(Self.grades, id: \.label) { g in
                         Button(g.label) { answer(card: card, grade: g.grade, in: session) }
                             .buttonStyle(.borderedProminent)
