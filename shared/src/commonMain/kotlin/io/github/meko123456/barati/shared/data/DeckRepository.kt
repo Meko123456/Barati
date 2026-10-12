@@ -88,6 +88,17 @@ class DeckRepository(
         update(deckId) { deck -> deck.copy(cards = deck.cards.filterNot { it.id == cardId }) }
     }
 
+    /**
+     * Undo for [deleteCard]: puts [card] back at [index], so the deck reads as it did. Its review
+     * state was never removed, so the card keeps its schedule. Nothing happens if it is already back.
+     */
+    fun restoreCard(deckId: String, card: FlashCard, index: Int) {
+        update(deckId) { deck ->
+            if (deck.cards.any { it.id == card.id }) deck
+            else deck.copy(cards = deck.cards.toMutableList().apply { add(index.coerceIn(0, size), card) })
+        }
+    }
+
     /** Applies [transform] to the matching deck and persists; returns whether it matched. */
     private fun update(deckId: String, transform: (Deck) -> Deck): Boolean {
         val i = decks.indexOfFirst { it.id == deckId }

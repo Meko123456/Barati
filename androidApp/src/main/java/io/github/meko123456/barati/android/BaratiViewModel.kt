@@ -68,4 +68,6 @@ class BaratiViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteCard(deckId: String, cardId: String) { repo.deleteCard(deckId, cardId); version++ }
+
+    fun restoreCard(deckId: String, card: FlashCard, index: Int) { repo.restoreCard(deckId, card, index); version++ }
 }

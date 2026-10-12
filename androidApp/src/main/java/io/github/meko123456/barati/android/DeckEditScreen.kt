@@ -21,6 +21,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -28,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.shared.domain.FlashCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +61,11 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
     val editingCard = deck.cards.firstOrNull { it.id == editingCardId }
     var renamingDeck by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(deck.name) },
@@ -120,7 +129,16 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
                             IconButton(onClick = { editingCardId = card.id }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Edit card")
                             }
-                            IconButton(onClick = { viewModel.deleteCard(deckId, card.id) }) {
+                            // Deletes at once, so it can be taken back: one tap on the bin lost the card.
+                            IconButton(onClick = {
+                                val index = deck.cards.indexOfFirst { it.id == card.id }
+                                viewModel.deleteCard(deckId, card.id)
+                                scope.launch {
+                                    snackbar.currentSnackbarData?.dismiss()
+                                    val result = snackbar.showSnackbar("Card deleted", actionLabel = "Undo", duration = SnackbarDuration.Long)
+                                    if (result == SnackbarResult.ActionPerformed) viewModel.restoreCard(deckId, card, index)
+                                }
+                            }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete card")
                             }
                         }

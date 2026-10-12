@@ -3,6 +3,7 @@ package io.github.meko123456.barati.shared
 import io.github.meko123456.barati.shared.data.DeckRepository
 import io.github.meko123456.barati.shared.data.DeckStore
 import io.github.meko123456.barati.shared.data.InMemoryKeyValueStore
+import io.github.meko123456.barati.shared.domain.Grade
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -33,6 +34,25 @@ class DeckEditingTest {
 
         repo.deleteDeck(deck.id)
         assertNull(repo.deck(deck.id))
+    }
+
+    @Test
+    fun aDeletedCardComesBackInItsPlaceWithItsSchedule() {
+        val repo = DeckRepository(deckStore = DeckStore(InMemoryKeyValueStore()))
+        val deck = repo.createDeck("Deck")
+        val a = repo.addCard(deck.id, "a", "1")!!
+        val b = repo.addCard(deck.id, "b", "2")!!
+        val c = repo.addCard(deck.id, "c", "3")!!
+        repo.grade(b.id, Grade.GOOD, today = 100)
+        val schedule = repo.reviewInfo(b.id)
+
+        repo.deleteCard(deck.id, b.id)
+        repo.restoreCard(deck.id, b, index = 1)
+
+        assertEquals(listOf(a.id, b.id, c.id), repo.deck(deck.id)!!.cards.map { it.id })
+        assertEquals(schedule, repo.reviewInfo(b.id), "the card's schedule must come back with it")
+        repo.restoreCard(deck.id, b, index = 1) // a second undo
+        assertEquals(3, repo.deck(deck.id)!!.cards.size, "a second undo must not add a copy")
     }
 
     @Test
