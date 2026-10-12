@@ -9,6 +9,7 @@ enum DeckRoute: Hashable {
 
 struct DeckListView: View {
     @EnvironmentObject var store: Store
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var path = NavigationPath()
     @State private var addingDeck = false
     @State private var newDeckName = ""
@@ -18,14 +19,21 @@ struct DeckListView: View {
             List(store.deckSummaries(), id: \.deck.id) { item in
                 let cards = "\(item.deck.cards.count) \(item.deck.cards.count == 1 ? "card" : "cards")"
                 NavigationLink(value: DeckRoute.study(item.deck.id)) {
-                    HStack {
+                    // At the accessibility text sizes the due count goes under the name. Beside it, it
+                    // left the name a third of the row, and "Georgian phrases" broke as "Geor- gian
+                    // phras es".
+                    let stacked = typeSize.isAccessibilitySize
+                    let layout = stacked
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                        : AnyLayout(HStackLayout())
+                    layout {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.deck.name).font(.headline)
                             Text(cards)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
-                        Spacer()
+                        if !stacked { Spacer() }
                         if item.due > 0 {
                             Text("\(item.due) due")
                                 .font(.headline)
