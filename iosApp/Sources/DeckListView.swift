@@ -62,6 +62,7 @@ struct DeckListView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { newDeckName = ""; addingDeck = true } label: { Image(systemName: "plus") }
                         .accessibilityIdentifier("newDeck")
+                        .accessibilityLabel("New deck")
                 }
             }
             .navigationDestination(for: DeckRoute.self) { route in

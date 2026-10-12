@@ -46,14 +46,17 @@ struct DeckEditView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                // Three unlabelled glyphs in a row: without identifiers a query has to pick one of
-                // three ambiguous buttons, and picking wrong here deletes the deck.
+                // Three glyphs in a row. The identifiers keep a UI test from picking the wrong one, and the
+                // labels tell VoiceOver what each does: a bare glyph says nothing about the deck.
                 Button { deckName = deck?.name ?? ""; showingRename = true } label: { Image(systemName: "pencil") }
                     .accessibilityIdentifier("renameDeck")
+                    .accessibilityLabel("Rename deck")
                 Button(role: .destructive) { confirmingDelete = true } label: { Image(systemName: "trash") }
                     .accessibilityIdentifier("deleteDeck")
+                    .accessibilityLabel("Delete deck")
                 Button { front = ""; back = ""; showingAddCard = true } label: { Image(systemName: "plus") }
                     .accessibilityIdentifier("addCard")
+                    .accessibilityLabel("Add card")
             }
         }
         // Asks first. The whole deck, every card in it, went at one tap of a glyph next to Rename. An

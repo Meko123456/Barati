@@ -163,6 +163,21 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(cards.waitForNonExistence(timeout: 15), "the confirmed delete left the deck in the list")
     }
 
+    func testToolbarButtonsSayWhatTheyDo() {
+        launchFresh()
+
+        // Glyph-only buttons: VoiceOver reads the label, so it has to name the action and its object.
+        let newDeck = app.buttons["newDeck"]
+        XCTAssertTrue(newDeck.waitForExistence(timeout: 30))
+        XCTAssertEqual(newDeck.label, "New deck")
+
+        openEditor(forDeck: "Kotlin basics")
+        XCTAssertTrue(app.buttons["deleteDeck"].waitForExistence(timeout: 15), "the deck editor never opened")
+        XCTAssertEqual(app.buttons["renameDeck"].label, "Rename deck")
+        XCTAssertEqual(app.buttons["deleteDeck"].label, "Delete deck")
+        XCTAssertEqual(app.buttons["addCard"].label, "Add card")
+    }
+
     // MARK: - Driving the app
 
     /// Launches against an empty store, so the repository seeds the samples and no earlier test's
