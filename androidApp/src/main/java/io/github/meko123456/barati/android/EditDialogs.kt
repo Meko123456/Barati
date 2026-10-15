@@ -3,6 +3,8 @@ package io.github.meko123456.barati.android
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -13,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
 /** Single-field prompt used for creating and renaming decks. */
@@ -35,6 +38,9 @@ fun TextFieldDialog(
                 onValueChange = { text = it },
                 label = { Text(label) },
                 singleLine = true,
+                // Done does what the button does, and nothing while the button is disabled.
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { if (text.isNotBlank()) onConfirm(text) }),
                 modifier = Modifier.fillMaxWidth(),
             )
         },
