@@ -63,7 +63,7 @@ fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) 
             }
             shown == null -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
                 Text("Session complete", style = MaterialTheme.typography.titleMedium)
-                Text("${session.total} cards reviewed", style = MaterialTheme.typography.bodyLarge)
+                Text(if (session.total == 1) "1 card reviewed" else "${session.total} cards reviewed", style = MaterialTheme.typography.bodyLarge)
                 Button(onClick = onBack, modifier = Modifier.padding(top = 16.dp)) { Text("Done") }
             }
             else -> {

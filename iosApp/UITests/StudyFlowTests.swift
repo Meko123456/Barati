@@ -113,6 +113,26 @@ final class StudyFlowTests: XCTestCase {
         expect(deck, toHaveValue: "1 card, 1 due")
     }
 
+    func testASittingOfOneCardCountsOneCard() {
+        launchFresh()
+        createDeck(named: "Swift basics")
+        let deck = app.buttons["deck-Swift basics"]
+        XCTAssertTrue(deck.waitForExistence(timeout: 30), "the new deck never reached the list")
+        openEditor(forDeck: "Swift basics")
+        addCard(front: "What does ?? do?", back: "Nil-coalescing.")
+        XCTAssertTrue(app.staticTexts["What does ?? do?"].waitForExistence(timeout: 15),
+                      "the card was not in the deck the repository handed back")
+        back()
+        expect(deck, toHaveValue: "1 card, 1 due")
+
+        tap(deck, "the Swift basics row")
+        tap(app.buttons["showAnswer"], "Show answer")
+        tap(app.buttons["grade-Good"], "the Good button")
+        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: 15), "the sitting did not end")
+        // One card, so "card": the summary said "1 cards reviewed".
+        XCTAssertTrue(app.staticTexts["1 card reviewed"].exists, "the summary did not count one card as one")
+    }
+
     func testReviewProgressAndNewDecksSurviveARelaunch() {
         launchFresh()
 
