@@ -9,6 +9,13 @@ import XCTest
 /// and card editing, and the round trip through `UserDefaults`.
 final class StudyFlowTests: XCTestCase {
 
+    /// How long to wait for the app to answer. A wait returns the moment it is met, so a generous
+    /// one costs nothing on a quick run. 15 seconds was not enough on a CI runner on 16 October
+    /// 2026: finding the deck row alone took 14, and the deck list was already right ("expected
+    /// "5 cards, nothing due", saw "5 cards, nothing due"").
+    static let wait: TimeInterval = 30
+
+
     private var app: XCUIApplication!
     private var suite: String!
 
@@ -44,7 +51,7 @@ final class StudyFlowTests: XCTestCase {
         // The same five, reached by a different call on the other side of the bridge: `dueCards`
         // returning a list rather than `dueCount` returning an Int.
         let progress = app.staticTexts["studyProgress"]
-        XCTAssertTrue(progress.waitForExistence(timeout: 15), "the study queue never appeared")
+        XCTAssertTrue(progress.waitForExistence(timeout: Self.wait), "the study queue never appeared")
         XCTAssertEqual(progress.label, "Card 1 of 5")
 
         tap(app.buttons["showAnswer"], "Show answer")
@@ -56,7 +63,7 @@ final class StudyFlowTests: XCTestCase {
         // Good on a never-seen card is SM-2 repetition 1 with a one-day interval, so the card is
         // due tomorrow and today's queue is one shorter. Nothing in Swift knows that rule; if the
         // grade had not crossed the bridge this would still read "5 due".
-        XCTAssertTrue(deck.waitForExistence(timeout: 15), "the deck list did not come back")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "the deck list did not come back")
         expect(deck, toHaveValue: "5 cards, 4 due")
     }
 
@@ -64,7 +71,7 @@ final class StudyFlowTests: XCTestCase {
         launchFresh()
         tap(app.buttons["deck-Kotlin basics"], "the Kotlin basics row")
         let progress = app.staticTexts["studyProgress"]
-        XCTAssertTrue(progress.waitForExistence(timeout: 30), "the study queue never appeared")
+        XCTAssertTrue(progress.waitForExistence(timeout: Self.wait), "the study queue never appeared")
 
         tap(app.buttons["showAnswer"], "Show answer")
         tap(app.buttons["grade-Again"], "the Again button")
@@ -79,7 +86,7 @@ final class StudyFlowTests: XCTestCase {
         expect(progress, toHaveLabel: "Once more · 1 left")
         tap(app.buttons["showAnswer"], "Show answer")
         tap(app.buttons["grade-Good"], "the Good button")
-        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: 15), "the sitting did not end")
+        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: Self.wait), "the sitting did not end")
 
         back()
         // Every card was graded across the bridge, the forgotten one for tomorrow.
@@ -94,7 +101,7 @@ final class StudyFlowTests: XCTestCase {
         // Created and empty. Two claims, split so a failure names one of them: the deck reached
         // the repository, and an empty deck has nothing to study.
         let deck = app.buttons["deck-Swift basics"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30), "the new deck never reached the list")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "the new deck never reached the list")
         XCTAssertEqual(deck.value as? String, "0 cards, nothing due", "an empty deck reported cards due")
 
         openEditor(forDeck: "Swift basics")
@@ -102,14 +109,14 @@ final class StudyFlowTests: XCTestCase {
 
         // The editor lists the deck's cards straight off the repository, so this is the first
         // proof that the card was stored rather than only typed.
-        XCTAssertTrue(app.staticTexts["What does ?? do?"].waitForExistence(timeout: 15),
+        XCTAssertTrue(app.staticTexts["What does ?? do?"].waitForExistence(timeout: Self.wait),
                       "the card was not in the deck the repository handed back")
 
         back()
 
         // And the payoff: a brand-new card is due today, because `Scheduler` counts a card with no
         // review history as due. The count went from nothing to one without the app restarting.
-        XCTAssertTrue(deck.waitForExistence(timeout: 15), "the deck list did not come back")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "the deck list did not come back")
         expect(deck, toHaveValue: "1 card, 1 due")
     }
 
@@ -117,10 +124,10 @@ final class StudyFlowTests: XCTestCase {
         launchFresh()
         createDeck(named: "Swift basics")
         let deck = app.buttons["deck-Swift basics"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 30), "the new deck never reached the list")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "the new deck never reached the list")
         openEditor(forDeck: "Swift basics")
         addCard(front: "What does ?? do?", back: "Nil-coalescing.")
-        XCTAssertTrue(app.staticTexts["What does ?? do?"].waitForExistence(timeout: 15),
+        XCTAssertTrue(app.staticTexts["What does ?? do?"].waitForExistence(timeout: Self.wait),
                       "the card was not in the deck the repository handed back")
         back()
         expect(deck, toHaveValue: "1 card, 1 due")
@@ -128,7 +135,7 @@ final class StudyFlowTests: XCTestCase {
         tap(deck, "the Swift basics row")
         tap(app.buttons["showAnswer"], "Show answer")
         tap(app.buttons["grade-Good"], "the Good button")
-        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: 15), "the sitting did not end")
+        XCTAssertTrue(app.staticTexts["Session complete"].waitForExistence(timeout: Self.wait), "the sitting did not end")
         // One card, so "card": the summary said "1 cards reviewed".
         XCTAssertTrue(app.staticTexts["1 card reviewed"].exists, "the summary did not count one card as one")
     }
@@ -137,11 +144,11 @@ final class StudyFlowTests: XCTestCase {
         launchFresh()
 
         createDeck(named: "Persisted deck")
-        XCTAssertTrue(app.buttons["deck-Persisted deck"].waitForExistence(timeout: 30),
+        XCTAssertTrue(app.buttons["deck-Persisted deck"].waitForExistence(timeout: Self.wait),
                       "the new deck never reached the list")
 
         let deck = app.buttons["deck-Kotlin basics"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 15))
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait))
         tap(deck, "the Kotlin basics row")
         tap(app.buttons["showAnswer"], "Show answer")
         tap(app.buttons["grade-Easy"], "the Easy button")
@@ -165,19 +172,19 @@ final class StudyFlowTests: XCTestCase {
         openEditor(forDeck: "Kotlin basics")
         tap(app.buttons["deleteDeck"], "the delete-deck button")
         let alert = app.alerts["Delete “Kotlin basics”?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 15), "deleting a deck did not ask first")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "deleting a deck did not ask first")
         XCTAssertTrue(alert.staticTexts["Its 5 cards go with it."].exists, "the question did not say what goes")
         tap(alert.buttons["Cancel"], "Cancel")
         back()
         let deck = app.buttons["deck-Kotlin basics"]
-        XCTAssertTrue(deck.waitForExistence(timeout: 15), "Cancel deleted the deck anyway")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "Cancel deleted the deck anyway")
 
         // And confirming does delete it.
         openEditor(forDeck: "Kotlin basics")
         tap(app.buttons["deleteDeck"], "the delete-deck button")
-        XCTAssertTrue(alert.waitForExistence(timeout: 15), "the second delete did not ask either")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the second delete did not ask either")
         tap(alert.buttons["Delete"], "Delete")
-        XCTAssertTrue(deck.waitForNonExistence(timeout: 15), "the confirmed delete left the deck in the list")
+        XCTAssertTrue(deck.waitForNonExistence(timeout: Self.wait), "the confirmed delete left the deck in the list")
     }
 
     func testToolbarButtonsSayWhatTheyDo() {
@@ -185,11 +192,11 @@ final class StudyFlowTests: XCTestCase {
 
         // Glyph-only buttons: VoiceOver reads the label, so it has to name the action and its object.
         let newDeck = app.buttons["newDeck"]
-        XCTAssertTrue(newDeck.waitForExistence(timeout: 30))
+        XCTAssertTrue(newDeck.waitForExistence(timeout: Self.wait))
         XCTAssertEqual(newDeck.label, "New deck")
 
         openEditor(forDeck: "Kotlin basics")
-        XCTAssertTrue(app.buttons["deleteDeck"].waitForExistence(timeout: 15), "the deck editor never opened")
+        XCTAssertTrue(app.buttons["deleteDeck"].waitForExistence(timeout: Self.wait), "the deck editor never opened")
         XCTAssertEqual(app.buttons["renameDeck"].label, "Rename deck")
         XCTAssertEqual(app.buttons["deleteDeck"].label, "Delete deck")
         XCTAssertEqual(app.buttons["addCard"].label, "Add card")
@@ -238,7 +245,7 @@ final class StudyFlowTests: XCTestCase {
     private func createDeck(named name: String) {
         tap(app.buttons["newDeck"], "the new-deck button")
         let alert = app.alerts.firstMatch
-        XCTAssertTrue(alert.waitForExistence(timeout: 15), "the new-deck prompt never opened")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the new-deck prompt never opened")
         let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10))
         field.tap()
@@ -257,11 +264,11 @@ final class StudyFlowTests: XCTestCase {
 
     private func addCard(front: String, back: String) {
         let add = app.buttons["addCard"]
-        XCTAssertTrue(add.waitForExistence(timeout: 15), "the deck editor never opened")
+        XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "the deck editor never opened")
         tap(add, "the add-card button")
 
         let alert = app.alerts.firstMatch
-        XCTAssertTrue(alert.waitForExistence(timeout: 15), "the add-card prompt never opened")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the add-card prompt never opened")
         let frontField = alert.textFields.element(boundBy: 0)
         XCTAssertTrue(frontField.waitForExistence(timeout: 10))
         frontField.tap()
@@ -283,7 +290,7 @@ final class StudyFlowTests: XCTestCase {
     private func expect(
         _ element: XCUIElement,
         toHaveLabel expected: String,
-        timeout: TimeInterval = 15,
+        timeout: TimeInterval = StudyFlowTests.wait,
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
@@ -300,7 +307,7 @@ final class StudyFlowTests: XCTestCase {
     private func expect(
         _ element: XCUIElement,
         toHaveValue expected: String,
-        timeout: TimeInterval = 15,
+        timeout: TimeInterval = StudyFlowTests.wait,
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
