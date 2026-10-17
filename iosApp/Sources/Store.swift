@@ -64,4 +64,9 @@ final class Store: ObservableObject {
     func addCard(_ deckId: String, front: String, back: String) { _ = repo.addCard(deckId: deckId, front: front, back: back); version += 1 }
     func updateCard(_ deckId: String, cardId: String, front: String, back: String) { repo.updateCard(deckId: deckId, cardId: cardId, front: front, back: back); version += 1 }
     func deleteCard(_ deckId: String, cardId: String) { repo.deleteCard(deckId: deckId, cardId: cardId); version += 1 }
+    /// Undo for deleteCard: the card goes back where it was, with its schedule.
+    func restoreCard(_ deckId: String, card: FlashCard, index: Int) {
+        repo.restoreCard(deckId: deckId, card: card, index: Int32(index))
+        version += 1
+    }
 }

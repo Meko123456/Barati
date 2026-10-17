@@ -16,6 +16,8 @@ struct DeckEditView: View {
     @State private var back = ""
     @State private var deckName = ""
     @State private var confirmingDelete = false
+    /// The card a swipe just deleted, while it can still be put back.
+    @State private var lastDeleted: DeletedCard?
 
     var body: some View {
         let deck = store.deck(deckId)
@@ -28,7 +30,13 @@ struct DeckEditView: View {
                         Text(card.back).font(.subheadline).foregroundStyle(.secondary)
                     }
                     .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) { store.deleteCard(deckId, cardId: card.id) } label: {
+                        // Deleted at once, and offered back below for a few seconds, as on Android.
+                        // The swipe used to be the end of the card, schedule and all.
+                        Button(role: .destructive) {
+                            let index = deck.cards.firstIndex { $0.id == card.id } ?? 0
+                            store.deleteCard(deckId, cardId: card.id)
+                            withAnimation { lastDeleted = DeletedCard(card: card, index: index) }
+                        } label: {
                             Label("Delete", systemImage: "trash")
                         }
                         Button { startEditing(card) } label: { Label("Edit", systemImage: "pencil") }
@@ -40,6 +48,28 @@ struct DeckEditView: View {
                     title: "No cards yet",
                     message: "Tap + to add your first card to this deck."
                 )
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let deleted = lastDeleted {
+                HStack {
+                    Text("Card deleted")
+                    Spacer()
+                    Button("Undo") {
+                        store.restoreCard(deckId, card: deleted.card, index: deleted.index)
+                        withAnimation { lastDeleted = nil }
+                    }
+                    .bold()
+                    .accessibilityIdentifier("undoCardDelete")
+                }
+                .padding()
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .padding()
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .task(id: deleted.card.id) {
+                    try? await Task.sleep(for: .seconds(6))
+                    if lastDeleted?.card.id == deleted.card.id { withAnimation { lastDeleted = nil } }
+                }
             }
         }
         .navigationTitle(deck?.name ?? "Deck")
@@ -118,6 +148,12 @@ private struct ContentUnavailableCompat: View {
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+/// A card a swipe deleted, and where it stood, so Undo can put it back in its place.
+private struct DeletedCard {
+    let card: FlashCard
+    let index: Int
 }
 
 /// What goes with a deck, said under both delete questions: the editor's and the list's swipe.

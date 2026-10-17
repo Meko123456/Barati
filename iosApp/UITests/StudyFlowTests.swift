@@ -208,6 +208,23 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(deck.waitForNonExistence(timeout: Self.wait), "the confirmed delete left the deck in the list")
     }
 
+    func testASwipedAwayCardCanBeUndone() {
+        launchFresh()
+
+        // On Android a deleted card comes with Undo; on iOS the swipe was the end of it.
+        openEditor(forDeck: "Kotlin basics")
+        let card = app.staticTexts["sealed class?"]
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the deck's cards are not listed")
+        card.swipeLeft()
+        tap(app.buttons["Delete"], "the swipe's Delete")
+        XCTAssertTrue(card.waitForNonExistence(timeout: Self.wait), "the swipe did not delete the card")
+
+        tap(app.buttons["undoCardDelete"], "Undo")
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "Undo did not bring the card back")
+        back()
+        expect(app.buttons["deck-Kotlin basics"], toHaveValue: "5 cards, 5 due")
+    }
+
     func testToolbarButtonsSayWhatTheyDo() {
         launchFresh()
 
