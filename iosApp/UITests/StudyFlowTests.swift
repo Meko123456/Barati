@@ -187,6 +187,27 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(deck.waitForNonExistence(timeout: Self.wait), "the confirmed delete left the deck in the list")
     }
 
+    func testSwipingToDeleteADeckAsksFirst() {
+        launchFresh()
+
+        // The editor's trash button asked, but the list's swipe action deleted the deck outright.
+        let deck = app.buttons["deck-Kotlin basics"]
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "the sample deck never appeared")
+        deck.swipeLeft()
+        tap(app.buttons["deleteDeck-Kotlin basics"], "the swipe's Delete")
+        let alert = app.alerts["Delete “Kotlin basics”?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the swipe deleted the deck without asking")
+        XCTAssertTrue(alert.staticTexts["Its 5 cards go with it."].exists, "the question did not say what goes")
+        tap(alert.buttons["Cancel"], "Cancel")
+        XCTAssertTrue(deck.waitForExistence(timeout: Self.wait), "Cancel deleted the deck anyway")
+
+        deck.swipeLeft()
+        tap(app.buttons["deleteDeck-Kotlin basics"], "the swipe's Delete")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the second swipe did not ask either")
+        tap(alert.buttons["Delete"], "Delete")
+        XCTAssertTrue(deck.waitForNonExistence(timeout: Self.wait), "the confirmed delete left the deck in the list")
+    }
+
     func testToolbarButtonsSayWhatTheyDo() {
         launchFresh()
 

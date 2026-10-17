@@ -66,8 +66,7 @@ struct DeckEditView: View {
             Button("Delete", role: .destructive) { store.deleteDeck(deckId); dismiss() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            let cards = deck?.cards.count ?? 0
-            Text(cards == 0 ? "It has no cards yet." : cards == 1 ? "Its 1 card goes with it." : "Its \(cards) cards go with it.")
+            Text(deckDeletionMessage(cards: deck?.cards.count ?? 0))
         }
         .alert("Add card", isPresented: $showingAddCard) {
             TextField("Front (prompt)", text: $front)
@@ -119,4 +118,9 @@ private struct ContentUnavailableCompat: View {
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+/// What goes with a deck, said under both delete questions: the editor's and the list's swipe.
+func deckDeletionMessage(cards: Int) -> String {
+    cards == 0 ? "It has no cards yet." : cards == 1 ? "Its 1 card goes with it." : "Its \(cards) cards go with it."
 }

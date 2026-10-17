@@ -13,6 +13,8 @@ struct DeckListView: View {
     @State private var path = NavigationPath()
     @State private var addingDeck = false
     @State private var newDeckName = ""
+    /// The deck a swipe asked to delete, held while the question is up.
+    @State private var pendingDelete: PendingDelete?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -53,9 +55,16 @@ struct DeckListView: View {
                 .accessibilityLabel(item.deck.name)
                 .accessibilityValue("\(cards), \(item.due > 0 ? "\(item.due) due" : "nothing due")")
                 .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) { store.deleteDeck(item.deck.id) } label: {
+                    // Asks first, as the editor's trash button does: the swipe deleted the deck and
+                    // every card in it at once, and a full swipe needs no tap at all. Tinted rather
+                    // than given the destructive role, which takes the row out of the list before
+                    // the answer is in.
+                    Button {
+                        pendingDelete = PendingDelete(id: item.deck.id, name: item.deck.name, cards: item.deck.cards.count)
+                    } label: {
                         Label("Delete", systemImage: "trash")
                     }
+                    .tint(.red)
                     .accessibilityIdentifier("deleteDeck-\(item.deck.name)")
                     Button { path.append(DeckRoute.edit(item.deck.id)) } label: {
                         Label("Edit", systemImage: "pencil")
@@ -78,6 +87,16 @@ struct DeckListView: View {
                 case .edit(let id): DeckEditView(deckId: id)
                 }
             }
+            .alert(
+                "Delete \u{201C}\(pendingDelete?.name ?? "this deck")\u{201D}?",
+                isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+                presenting: pendingDelete
+            ) { pending in
+                Button("Delete", role: .destructive) { store.deleteDeck(pending.id) }
+                Button("Cancel", role: .cancel) {}
+            } message: { pending in
+                Text(deckDeletionMessage(cards: pending.cards))
+            }
             .alert("New deck", isPresented: $addingDeck) {
                 TextField("Deck name", text: $newDeckName)
                 Button("Create") {
@@ -88,4 +107,11 @@ struct DeckListView: View {
             }
         }
     }
+}
+
+/// A deck waiting on the delete question: enough of it to ask about it by name.
+private struct PendingDelete {
+    let id: String
+    let name: String
+    let cards: Int
 }
