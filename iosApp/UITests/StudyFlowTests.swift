@@ -286,8 +286,7 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the new-deck prompt never opened")
         let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10))
-        field.tap()
-        field.typeText(name)
+        typeOnceFocused(field, name)
         alert.buttons["Create"].tap()
     }
 
@@ -309,12 +308,21 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the add-card prompt never opened")
         let frontField = alert.textFields.element(boundBy: 0)
         XCTAssertTrue(frontField.waitForExistence(timeout: 10))
-        frontField.tap()
-        frontField.typeText(front)
+        typeOnceFocused(frontField, front)
         let backField = alert.textFields.element(boundBy: 1)
-        backField.tap()
-        backField.typeText(back)
+        typeOnceFocused(backField, back)
         alert.buttons["Add"].tap()
+    }
+
+    /// Taps a field and types only once it has the keyboard, tapping again if it never gets it.
+    /// An alert's fields can still be animating in when the tap lands, and typeText then fails with
+    /// "Neither element nor any descendant has keyboard focus": DayBlocks' CI lost a run that way
+    /// on 17 October 2026, and Nishani's search on the 14th.
+    private func typeOnceFocused(_ field: XCUIElement, _ text: String) {
+        field.tap()
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        if XCTWaiter().wait(for: [focused], timeout: 10) != .completed { field.tap() }
+        field.typeText(text)
     }
 
     private func back() {
