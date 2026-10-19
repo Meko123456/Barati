@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +62,7 @@ fun DeckListScreen(
                 Text("Your decks", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 4.dp))
             }
             items(summaries, key = { it.first.id }) { (deck, due) ->
+                val locale = LocalConfiguration.current.locales[0]
                 Card(modifier = Modifier.fillMaxWidth().clickable { onOpenDeck(deck.id) }) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 8.dp),
@@ -69,13 +71,13 @@ fun DeckListScreen(
                         Column(Modifier.weight(1f)) {
                             Text(deck.name, style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "${deck.cards.size} ${if (deck.cards.size == 1) "card" else "cards"}",
+                                "${grouped(deck.cards.size, locale)} ${if (deck.cards.size == 1) "card" else "cards"}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Text(
-                            if (due > 0) "$due due" else "✓",
+                            if (due > 0) "${grouped(due, locale)} due" else "✓",
                             style = MaterialTheme.typography.titleMedium,
                             color = if (due > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         )

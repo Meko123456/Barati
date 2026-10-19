@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.shared.domain.Grade
@@ -63,7 +64,7 @@ fun StudyScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Unit) 
             }
             shown == null -> Column(content, Arrangement.Center, Alignment.CenterHorizontally) {
                 Text("Session complete", style = MaterialTheme.typography.titleMedium)
-                Text(if (session.total == 1) "1 card reviewed" else "${session.total} cards reviewed", style = MaterialTheme.typography.bodyLarge)
+                Text(if (session.total == 1) "1 card reviewed" else "${grouped(session.total, LocalConfiguration.current.locales[0])} cards reviewed", style = MaterialTheme.typography.bodyLarge)
                 Button(onClick = onBack, modifier = Modifier.padding(top = 16.dp)) { Text("Done") }
             }
             else -> {

@@ -37,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.barati.shared.domain.FlashCard
@@ -171,6 +172,7 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
     // Asks first. The whole deck, every card in it, went at one tap of an icon next to Rename.
     if (confirmingDelete) {
         val cards = deck.cards.size
+        val locale = LocalConfiguration.current.locales[0]
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
             title = { Text("Delete “${deck.name}”?") },
@@ -179,7 +181,7 @@ fun DeckEditScreen(viewModel: BaratiViewModel, deckId: String, onBack: () -> Uni
                     when (cards) {
                         0 -> "It has no cards yet."
                         1 -> "Its 1 card goes with it."
-                        else -> "Its $cards cards go with it."
+                        else -> "Its ${grouped(cards, locale)} cards go with it."
                     },
                 )
             },
