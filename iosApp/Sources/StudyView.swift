@@ -39,7 +39,7 @@ struct StudyView: View {
             } else {
                 VStack(spacing: 12) {
                     Text("Session complete").font(.title2.bold())
-                    Text(session.total == 1 ? "1 card reviewed" : "\(session.total) cards reviewed").foregroundStyle(.secondary)
+                    Text(session.total == 1 ? "1 card reviewed" : "\(session.total.formatted()) cards reviewed").foregroundStyle(.secondary)
                 }
             }
         } else {

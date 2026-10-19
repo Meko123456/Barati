@@ -158,5 +158,5 @@ private struct DeletedCard {
 
 /// What goes with a deck, said under both delete questions: the editor's and the list's swipe.
 func deckDeletionMessage(cards: Int) -> String {
-    cards == 0 ? "It has no cards yet." : cards == 1 ? "Its 1 card goes with it." : "Its \(cards) cards go with it."
+    cards == 0 ? "It has no cards yet." : cards == 1 ? "Its 1 card goes with it." : "Its \(cards.formatted()) cards go with it."
 }

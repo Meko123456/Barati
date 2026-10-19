@@ -19,7 +19,8 @@ struct DeckListView: View {
     var body: some View {
         NavigationStack(path: $path) {
             List(store.deckSummaries(), id: \.deck.id) { item in
-                let cards = "\(item.deck.cards.count) \(item.deck.cards.count == 1 ? "card" : "cards")"
+                // formatted() groups the digits as the phone's language does: "1,234 cards", not "1234".
+                let cards = "\(item.deck.cards.count.formatted()) \(item.deck.cards.count == 1 ? "card" : "cards")"
                 NavigationLink(value: DeckRoute.study(item.deck.id)) {
                     // At the accessibility text sizes the due count goes under the name. Beside it, it
                     // left the name a third of the row, and "Georgian phrases" broke as "Geor- gian
@@ -37,7 +38,7 @@ struct DeckListView: View {
                         }
                         if !stacked { Spacer() }
                         if item.due > 0 {
-                            Text("\(item.due) due")
+                            Text("\(item.due.formatted()) due")
                                 .font(.headline)
                                 .foregroundStyle(.tint)
                         } else {
@@ -53,7 +54,7 @@ struct DeckListView: View {
                 // when nothing is due read "Selected". The counts are the value, so a test reads them
                 // whole.
                 .accessibilityLabel(item.deck.name)
-                .accessibilityValue("\(cards), \(item.due > 0 ? "\(item.due) due" : "nothing due")")
+                .accessibilityValue("\(cards), \(item.due > 0 ? "\(item.due.formatted()) due" : "nothing due")")
                 .swipeActions(edge: .trailing) {
                     // Asks first, as the editor's trash button does: the swipe deleted the deck and
                     // every card in it at once, and a full swipe needs no tap at all. Tinted rather
