@@ -55,7 +55,15 @@ class BaratiViewModel(app: Application) : AndroidViewModel(app) {
 
     // --- Editing (each bumps version so the UI recomposes) ---------------------
 
-    fun createDeck(name: String) { repo.createDeck(name); version++ }
+    /** Creates the deck and gives its id. */
+    fun createDeck(name: String): String = repo.createDeck(name).id.also { version++ }
+
+    private val ui = app.getSharedPreferences("barati_ui", android.content.Context.MODE_PRIVATE)
+
+    /** The deck the last card made from another app's text went into: where the next one starts. */
+    var lastDeckForText: String?
+        get() = ui.getString("last_deck_for_text", null)
+        set(value) = ui.edit().putString("last_deck_for_text", value).apply()
 
     fun renameDeck(deckId: String, name: String) { repo.renameDeck(deckId, name); version++ }
 
