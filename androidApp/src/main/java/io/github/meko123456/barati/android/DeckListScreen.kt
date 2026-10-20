@@ -33,6 +33,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +96,10 @@ fun DeckListScreen(
                             if (due > 0) "${grouped(due, locale)} due" else "✓",
                             style = MaterialTheme.typography.titleMedium,
                             color = if (due > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            // The tick is read as words: TalkBack said "check mark".
+                            modifier = if (due > 0) Modifier else Modifier.clearAndSetSemantics {
+                                text = AnnotatedString("Nothing due")
+                            },
                         )
                         IconButton(onClick = { onEditDeck(deck.id) }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit ${deck.name}")
