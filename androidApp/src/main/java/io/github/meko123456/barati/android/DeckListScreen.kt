@@ -30,6 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +47,18 @@ fun DeckListScreen(
     var addingDeck by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Barati 🗂️") }) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    // Read as the app's name and as the screen's heading. TalkBack read the emoji
+                    // too: "Barati, card index dividers".
+                    Text(
+                        "Barati 🗂️",
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = "Barati"; heading() },
+                    )
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { addingDeck = true }) {
                 Icon(Icons.Default.Add, contentDescription = "New deck")
