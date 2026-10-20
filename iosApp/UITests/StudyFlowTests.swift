@@ -280,9 +280,19 @@ final class StudyFlowTests: XCTestCase {
         element.tap()
     }
 
+    /// Taps [button] once it can be hit, and again if [opens] has not come up 15 seconds later and
+    /// the button can still be hit. On a simulator just booted on CI (the run for fe754a6,
+    /// 20 October 2026) the first tap of the first test went nowhere, and "the new-deck prompt
+    /// never opened"; DayBlocks lost a run the same way on 17 October. With the prompt up, the
+    /// button under it can't be hit, so the second tap can't open a second prompt.
+    private func tap(_ button: XCUIElement, _ what: String, until opens: XCUIElement) {
+        tap(button, what)
+        if !opens.waitForExistence(timeout: 15), button.exists, button.isHittable { button.tap() }
+    }
+
     private func createDeck(named name: String) {
-        tap(app.buttons["newDeck"], "the new-deck button")
         let alert = app.alerts.firstMatch
+        tap(app.buttons["newDeck"], "the new-deck button", until: alert)
         XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the new-deck prompt never opened")
         let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10))
@@ -302,9 +312,8 @@ final class StudyFlowTests: XCTestCase {
     private func addCard(front: String, back: String) {
         let add = app.buttons["addCard"]
         XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "the deck editor never opened")
-        tap(add, "the add-card button")
-
         let alert = app.alerts.firstMatch
+        tap(add, "the add-card button", until: alert)
         XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the add-card prompt never opened")
         let frontField = alert.textFields.element(boundBy: 0)
         XCTAssertTrue(frontField.waitForExistence(timeout: 10))
