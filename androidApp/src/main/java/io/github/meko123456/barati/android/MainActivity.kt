@@ -109,6 +109,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun take(intent: Intent?, openedForIt: Boolean) {
+        // The launcher's New card shortcut (res/xml/shortcuts.xml): the same dialog, front empty.
+        if (intent?.action == ACTION_NEW_CARD) {
+            incoming = Incoming("", openedForIt)
+            return
+        }
         val text = when (intent?.action) {
             Intent.ACTION_PROCESS_TEXT -> intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
             Intent.ACTION_SEND -> intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
@@ -119,4 +124,8 @@ class MainActivity : ComponentActivity() {
 
     /** Text handed over by another app, and whether this activity was started just for it. */
     private data class Incoming(val text: String, val openedForIt: Boolean)
+
+    companion object {
+        const val ACTION_NEW_CARD = "io.github.meko123456.barati.action.NEW_CARD"
+    }
 }

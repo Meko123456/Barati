@@ -103,10 +103,10 @@ fun CardDialog(
 }
 
 /**
- * The add-card dialog for text picked out or shared in another app: the front filled in and the
- * back ready to type, plus the deck the card goes into, since nothing in Barati was open to say
- * which. With no decks yet it names a new one. [onAdd] gets a deck id, or null and the new
- * deck's name.
+ * The add-card dialog for text picked out or shared in another app, or the New card shortcut: the
+ * front filled in and the back ready to type (or both empty), plus the deck the card goes into,
+ * since nothing in Barati was open to say which. With no decks yet it names a new one. [onAdd]
+ * gets a deck id, or null and the new deck's name.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,6 +127,7 @@ fun CardFromTextDialog(
     val chosen = decks.firstOrNull { it.id == deckId }
     val canAdd = frontText.isNotBlank() && back.isNotBlank() &&
         (chosen != null || (decks.isEmpty() && newDeck.isNotBlank()))
+    val frontFocus = remember { FocusRequester() }
     val backFocus = remember { FocusRequester() }
     val add = { onAdd(chosen?.id, newDeck, frontText, back) }
 
@@ -170,7 +171,9 @@ fun CardFromTextDialog(
                     value = frontText,
                     onValueChange = { frontText = it },
                     label = { Text("Front (prompt)") },
-                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { backFocus.requestFocus() }),
+                    modifier = Modifier.fillMaxWidth().focusRequester(frontFocus),
                 )
                 // The keyboard's action key adds the card: with the keyboard up, the dialog slides up
                 // to keep this field in view, and Add is under the keyboard.
@@ -183,8 +186,9 @@ fun CardFromTextDialog(
                     modifier = Modifier.fillMaxWidth().focusRequester(backFocus),
                 )
             }
-            // The front came with the text; what's left to type is the answer.
-            LaunchedEffect(Unit) { backFocus.requestFocus() }
+            // The front came with the text, so what's left to type is the answer; from the New card
+            // shortcut there is no text yet, and the front comes first.
+            LaunchedEffect(Unit) { (if (front.isBlank()) frontFocus else backFocus).requestFocus() }
         },
         confirmButton = {
             TextButton(enabled = canAdd, onClick = add) { Text("Add") }

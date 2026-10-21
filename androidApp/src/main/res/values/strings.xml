@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Barati</string>
+    <string name="shortcut_new_card_short">New card</string>
+    <string name="shortcut_new_card_long">Add a new card</string>
 </resources>
