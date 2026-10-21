@@ -22,6 +22,10 @@ native** — Jetpack Compose on Android, SwiftUI on iOS.
   serialization and scheduling stay in shared Kotlin.
 - 🤖🍎 **Genuinely native UI** — the same shared repository drives a Compose UI
   and a SwiftUI UI, each idiomatic to its platform.
+- ✍️ **Cards from anywhere** (Android) — select a word in any app and pick *Barati*
+  in the selection menu, or share it, or long-press the icon for *Add a new card*:
+  the card dialog opens with the word on the front, in the deck last used, and adding
+  goes straight back to what you were reading.
 
 ## Screenshots
 
