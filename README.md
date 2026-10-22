@@ -26,6 +26,9 @@ native** — Jetpack Compose on Android, SwiftUI on iOS.
   in the selection menu, or share it, or long-press the icon for *Add a new card*:
   the card dialog opens with the word on the front, in the deck last used, and adding
   goes straight back to what you were reading.
+- ➕ **Add a new card from the Home Screen** (iOS) — long-press the icon: a New card
+  sheet opens ready to type, in the deck being studied or the one last used, and names
+  a new deck when there are none.
 
 ## Screenshots
 
