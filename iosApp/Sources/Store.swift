@@ -56,9 +56,21 @@ final class Store: ObservableObject {
         version += 1
     }
 
+    /// The deck the last card added from the Home Screen went into: where the next one starts.
+    var lastDeckForNewCard: String? {
+        get { defaults.getString(key: "last_deck_for_new_card") }
+        set { if let newValue { defaults.putString(key: "last_deck_for_new_card", value: newValue) } }
+    }
+
     // --- Editing (each bumps version so observing views recompute) -------------
 
-    func createDeck(name: String) { _ = repo.createDeck(name: name); version += 1 }
+    /// Creates the deck and gives its id.
+    @discardableResult
+    func createDeck(name: String) -> String {
+        let id = repo.createDeck(name: name).id
+        version += 1
+        return id
+    }
     func renameDeck(_ deckId: String, name: String) { repo.renameDeck(deckId: deckId, name: name); version += 1 }
     func deleteDeck(_ deckId: String) { repo.deleteDeck(deckId: deckId); version += 1 }
     func addCard(_ deckId: String, front: String, back: String) { _ = repo.addCard(deckId: deckId, front: front, back: back); version += 1 }

@@ -9,8 +9,13 @@ enum DeckRoute: Hashable {
 
 struct DeckListView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var quickActions: QuickActions
     @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var path = NavigationPath()
+    /// Typed rather than a NavigationPath, so a card from the Home Screen can start in the deck
+    /// that is open.
+    @State private var path: [DeckRoute] = []
+    /// The Home Screen's Add a new card, while its sheet is up.
+    @State private var newCard: NewCardRequest?
     @State private var addingDeck = false
     @State private var newDeckName = ""
     /// The deck a swipe asked to delete, held while the question is up.
@@ -107,7 +112,32 @@ struct DeckListView: View {
                 Button("Cancel", role: .cancel) {}
             }
         }
+        // On the stack, not the list, so it opens over a deck being studied or edited too.
+        .sheet(item: $newCard) { request in
+            NewCardView(openDeckId: request.openDeckId).environmentObject(store)
+        }
+        // The Home Screen's Add a new card: on launch, or later while the app is running.
+        .onAppear(perform: takeQuickAction)
+        .onChange(of: quickActions.pending) { _ in takeQuickAction() }
     }
+
+    private func takeQuickAction() {
+        guard quickActions.pending == .newCard else { return }
+        quickActions.pending = nil
+        let openDeck: String?
+        switch path.last {
+        case .study(let id), .edit(let id): openDeck = id
+        case nil: openDeck = nil
+        }
+        newCard = NewCardRequest(openDeckId: openDeck)
+    }
+}
+
+/// One opening of the New card sheet. Each has its own identity, so the action used while the
+/// sheet is up starts a blank card.
+private struct NewCardRequest: Identifiable {
+    let id = UUID()
+    let openDeckId: String?
 }
 
 /// A deck waiting on the delete question: enough of it to ask about it by name.

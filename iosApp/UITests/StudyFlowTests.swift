@@ -240,6 +240,79 @@ final class StudyFlowTests: XCTestCase {
         XCTAssertEqual(app.buttons["addCard"].label, "Add card")
     }
 
+    func testTheHomeScreenQuickActionAddsACardToTheOpenDeck() {
+        launchFresh()
+        let kotlin = app.buttons["deck-Kotlin basics"]
+        let georgian = app.buttons["deck-Georgian phrases"]
+        XCTAssertTrue(georgian.waitForExistence(timeout: 60), "the seeded decks never reached the list")
+        expect(georgian, toHaveValue: "5 cards, 5 due")
+        // Studying the second deck when the action comes: the card goes into it, not into the first
+        // deck in the list, unless another is picked.
+        tap(georgian, "the Georgian phrases row")
+        XCTAssertTrue(app.staticTexts["studyProgress"].waitForExistence(timeout: Self.wait), "the study queue never appeared")
+
+        useQuickAction("io.github.meko123456.barati.new-card")
+
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20), "the quick action did not bring Barati back")
+        let front = app.textFields["newCardFront"]
+        XCTAssertTrue(front.waitForExistence(timeout: Self.wait), "the quick action did not open a new card")
+        expectKeyboard(on: front, "the new card opened without the keyboard")
+        front.typeText("Good morning\n")
+        let backField = app.textFields["newCardBack"]
+        expectKeyboard(on: backField, "return on the front did not move to the back")
+        backField.typeText("dila mshvidobisa\n")
+        XCTAssertTrue(front.waitForNonExistence(timeout: Self.wait), "return on the back did not add the card")
+
+        back()
+        expect(georgian, toHaveValue: "6 cards, 6 due")
+        expect(kotlin, toHaveValue: "5 cards, 5 due")
+    }
+
+    func testAQuickActionCardWithNoDecksNamesANewOne() {
+        launchFresh()
+        for name in ["Kotlin basics", "Georgian phrases"] {
+            let deck = app.buttons["deck-\(name)"]
+            XCTAssertTrue(deck.waitForExistence(timeout: 60), "the sample deck \(name) never appeared")
+            deck.swipeLeft()
+            tap(app.buttons["deleteDeck-\(name)"], "the swipe's Delete")
+            let alert = app.alerts["Delete “\(name)”?"]
+            XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "the delete question never came")
+            tap(alert.buttons["Delete"], "Delete")
+            XCTAssertTrue(deck.waitForNonExistence(timeout: Self.wait), "the deck was not deleted")
+        }
+
+        useQuickAction("io.github.meko123456.barati.new-card")
+
+        // Nothing to pick from, so the card's deck is named here, first.
+        let deckName = app.textFields["newCardDeckName"]
+        XCTAssertTrue(deckName.waitForExistence(timeout: Self.wait), "with no decks there was no field to name one")
+        expectKeyboard(on: deckName, "the deck's name field opened without the keyboard")
+        deckName.typeText("Spanish\n")
+        let front = app.textFields["newCardFront"]
+        expectKeyboard(on: front, "return on the deck's name did not move to the front")
+        front.typeText("Hello\n")
+        app.textFields["newCardBack"].typeText("Hola\n")
+        XCTAssertTrue(front.waitForNonExistence(timeout: Self.wait), "return on the back did not add the card")
+
+        let spanish = app.buttons["deck-Spanish"]
+        XCTAssertTrue(spanish.waitForExistence(timeout: Self.wait), "the new deck is not in the list")
+        expect(spanish, toHaveValue: "1 card, 1 due")
+    }
+
+    func testTheQuickActionOpensANewCardWhenItStartsTheApp() {
+        launchFresh()
+        app.terminate()
+
+        // Started by the quick action, so without this test's store: only the sheet is checked, and
+        // nothing is added to the simulator's own decks.
+        useQuickAction("io.github.meko123456.barati.new-card")
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30), "the quick action did not start Barati")
+        let front = app.textFields["newCardFront"]
+        XCTAssertTrue(front.waitForExistence(timeout: Self.wait), "Barati started on the deck list, not a new card")
+        expectKeyboard(on: front, "the new card opened without the keyboard")
+        tap(app.buttons["Cancel"], "Cancel")
+    }
+
     // MARK: - Driving the app
 
     /// Launches against an empty store, so the repository seeds the samples and no earlier test's
@@ -332,6 +405,55 @@ final class StudyFlowTests: XCTestCase {
         let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
         if XCTWaiter().wait(for: [focused], timeout: 10) != .completed { field.tap() }
         field.typeText(text)
+    }
+
+    /// Picks a Home Screen quick action the way a person does: a long press on Barati's icon, then
+    /// the action in the menu that opens. [type] is the action's UIApplicationShortcutItemType,
+    /// which SpringBoard uses as the menu row's identifier.
+    ///
+    /// SpringBoard never reports itself idle while that menu is open, so every event sent while it
+    /// is up first waits out XCUITest's 60-second idle timeout. When the menu opens below the icon,
+    /// its first row is the app's own action (Barati has no widget, whose sizes would come first),
+    /// and one press that slides onto that row and lets go is a single event, sent before the menu
+    /// exists. Otherwise it is a press, then a tap, and two of those waits.
+    private func useQuickAction(_ type: String) {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        XCUIDevice.shared.press(.home)
+        // Again, which takes the Home Screen back to its first page. An icon on another page has
+        // an empty frame, which says nothing about which way it is, so the search starts there.
+        XCUIDevice.shared.press(.home)
+        let icon = springboard.icons["Barati"]
+        XCTAssertTrue(icon.waitForExistence(timeout: 30), "Barati is not on the Home Screen")
+        // A newly installed app goes on the last page.
+        var pages = 0
+        while !icon.isHittable && pages < 5 {
+            springboard.swipeLeft()
+            pages += 1
+        }
+
+        let frame = icon.frame
+        let origin = springboard.coordinate(withNormalizedOffset: .zero)
+        // The frame takes in the name under the picture; the press goes on the picture.
+        let picture = origin.withOffset(CGVector(dx: frame.midX, dy: frame.minY + frame.width / 2))
+        if frame.maxY + 320 < springboard.frame.maxY {
+            let firstRow = origin.withOffset(CGVector(dx: frame.midX, dy: frame.maxY + 21))
+            picture.press(forDuration: 1.0, thenDragTo: firstRow, withVelocity: .slow, thenHoldForDuration: 0.3)
+        } else {
+            picture.press(forDuration: 1.0)
+            let action = springboard.buttons[type]
+            XCTAssertTrue(action.waitForExistence(timeout: 15), "the icon's menu has no \(type)")
+            action.tap()
+        }
+    }
+
+    private func expectKeyboard(
+        on element: XCUIElement,
+        _ message: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 10), .completed, message, file: file, line: line)
     }
 
     private func back() {
