@@ -3,8 +3,11 @@ package io.github.meko123456.barati.android
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +29,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import io.github.meko123456.barati.shared.domain.Deck
 
 /** Single-field prompt used for creating and renaming decks. */
@@ -133,9 +137,17 @@ fun CardFromTextDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        // Edge to edge, inside the system bars and above the keyboard. Its three fields made it too
+        // tall to pan into view whole: the window slid up to the focused field and left Add under
+        // the keyboard. Now the fields scroll inside it and Add stays in view.
+        properties = DialogProperties(decorFitsSystemWindows = false),
+        modifier = Modifier.safeDrawingPadding(),
         title = { Text("Add card") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
                 if (decks.isEmpty()) {
                     OutlinedTextField(
                         value = newDeck,
@@ -175,8 +187,7 @@ fun CardFromTextDialog(
                     keyboardActions = KeyboardActions(onNext = { backFocus.requestFocus() }),
                     modifier = Modifier.fillMaxWidth().focusRequester(frontFocus),
                 )
-                // The keyboard's action key adds the card: with the keyboard up, the dialog slides up
-                // to keep this field in view, and Add is under the keyboard.
+                // The keyboard's action key adds the card, as Add does.
                 OutlinedTextField(
                     value = back,
                     onValueChange = { back = it },
