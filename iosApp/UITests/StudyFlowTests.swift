@@ -67,6 +67,29 @@ final class StudyFlowTests: XCTestCase {
         expect(deck, toHaveValue: "5 cards, 4 due")
     }
 
+    func testACardIsDueAgainOnceTheNextDayHasStartedWhereThePhoneIs() {
+        // Pago Pago (UTC-11) and Kiritimati (UTC+14) are 25 hours apart, so whenever this runs
+        // Kiritimati is already on a later date. A card graded Good is due the next day, so once
+        // the phone is in Kiritimati it is due again. Counting days in UTC made both launches the
+        // same day, and the card stayed hidden.
+        app.launchEnvironment["TZ"] = "Pacific/Pago_Pago"
+        launchFresh()
+
+        let deck = app.buttons["deck-Kotlin basics"]
+        XCTAssertTrue(deck.waitForExistence(timeout: 60), "the seeded deck never reached the list")
+        tap(deck, "the Kotlin basics row")
+        tap(app.buttons["showAnswer"], "Show answer")
+        tap(app.buttons["grade-Good"], "the Good button")
+        back()
+        expect(deck, toHaveValue: "5 cards, 4 due")
+
+        app.launchEnvironment["TZ"] = "Pacific/Kiritimati"
+        relaunchWithoutClearingTheStore()
+
+        XCTAssertTrue(deck.waitForExistence(timeout: 60), "the deck list did not come back")
+        expect(deck, toHaveValue: "5 cards, 5 due")
+    }
+
     func testACardGradedAgainComesBackBeforeTheSittingEnds() {
         launchFresh()
         tap(app.buttons["deck-Kotlin basics"], "the Kotlin basics row")

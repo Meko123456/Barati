@@ -12,8 +12,8 @@ import io.github.meko123456.barati.shared.data.ReviewStore
 import io.github.meko123456.barati.shared.domain.Deck
 import io.github.meko123456.barati.shared.domain.FlashCard
 import io.github.meko123456.barati.shared.domain.Grade
+import io.github.meko123456.barati.shared.domain.StudyDay
 import io.github.meko123456.barati.shared.domain.StudySession
-import java.time.LocalDate
 
 /** Thin Android wrapper over the shared [DeckRepository]. */
 class BaratiViewModel(app: Application) : AndroidViewModel(app) {
@@ -25,7 +25,7 @@ class BaratiViewModel(app: Application) : AndroidViewModel(app) {
     var version by mutableIntStateOf(0)
         private set
 
-    private val today: Long get() = LocalDate.now().toEpochDay()
+    private val today: Long get() = StudyDay.today()
 
     fun deckSummaries(): List<Pair<Deck, Int>> =
         repo.decks().map { it to repo.dueCount(it.id, today) }

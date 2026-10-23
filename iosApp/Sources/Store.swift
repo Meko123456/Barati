@@ -19,7 +19,7 @@ final class Store: ObservableObject {
     /// Bumped on every change so observing views recompute their queues/counts.
     @Published private(set) var version = 0
 
-    private var today: Int64 { Int64(Date().timeIntervalSince1970 / 86_400) }
+    private var today: Int64 { StudyDay.shared.today() }
 
     /// Where decks and review progress are written: the real defaults for the app, a throwaway
     /// suite for a UI test.
